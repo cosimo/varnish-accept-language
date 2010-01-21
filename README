@@ -12,7 +12,7 @@ Accept-Language headers and reduce them to just the languages your site supports
 *** WARNING ***
 This VCL consists of C code. Your Varnish might explode. YMMV.
 Don't use it in production if you don't know what you're doing.
-We are using it in production, but we don't know what we're doing.
+We are using it in production, but we _don't_ know what we're doing :).
 
 Why would you want this?
 ------------------------
