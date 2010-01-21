@@ -1,0 +1,67 @@
+Varnish Accept-Language VCL
+===========================
+
+Last updated: 21/01/2010
+	Cosimo Streppone <cosimo@opera.com>
+	Opera Software ASA
+
+Here you will find a VCL config file for Varnish (http://varnish-cache.org)
+This VCL allows you to normalize and filter all the incoming requests
+Accept-Language headers and reduce them to just the languages your site supports.
+
+*** WARNING ***
+This VCL consists of C code. Your Varnish might explode. YMMV.
+Don't use it in production if you don't know what you're doing.
+We are using it in production, but we don't know what we're doing.
+
+Why would you want this?
+------------------------
+Your site supports English and Japanese languages.
+Your client browsers will send every possible Accept-Language header on Earth.
+If you enable "Vary: Accept-Language" on Varnish or on your backends,
+the cache hit ratio will rapidly drop, because of the huge variations
+in Accept-Language contents.
+
+With this VCL, the Accept-Language header will be "rewritten" to just
+"en" or "ja", depending on your client settings. If no match occurs,
+you can select a default language.
+
+The rewritten header is "X-Varnish-Accept-Language".
+You can choose to put this header back in "Accept-Language" if you wish.
+In this way, the normalization will be completely transparent.
+
+Requirements
+------------
+
+- gcc, make
+- a recent perl, with `prove'
+- File::Slurp CPAN module
+
+Instructions
+-------------
+
+1) Configure the list of languages your site supports
+   and the default fallback in the Makefile, *NOT* in the C code.
+
+2) Run 'make && make test'
+   You should see "All tests successful" at the end of the execution
+
+3) Install the generated accept-language.vcl in /etc/varnish/
+
+4) Add the following include directives at the top of your main VCL file
+   (default.vcl or the name you're using).
+
+   #include <string.h>
+   #include <stdio.h>
+   #include <stdlib.h>
+
+5) Inside your vcl_recv(), add the following line:
+
+   include "/etc/varnish/accept-language.vcl"
+
+6) Restart Varnish
+
+7) Cross your fingers
+
+8) Profit !!
+
