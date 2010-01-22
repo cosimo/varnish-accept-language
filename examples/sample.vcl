@@ -7,7 +7,9 @@ include "/etc/varnish/accept-language.vcl";
 sub vcl_recv {
 
 	# ...
-    vcl_rewrite_accept_language();
+C{
+    vcl_rewrite_accept_language(sp);
+}C
 
 	# ...
 	# lookup;

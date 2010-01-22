@@ -2,7 +2,7 @@
 # Set your language preferences here
 #
 DEFAULT_LANGUAGE=en
-SUPPORTED_LANGUAGES=en es it ja ru zh-cn
+SUPPORTED_LANGUAGES=bg cs da en es fi fy hu it ja no pl ru tr uk vn xx-lol zh-cn
 
 CC=cc
 CPP=cpp -C -P -E
