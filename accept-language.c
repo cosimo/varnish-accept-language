@@ -72,10 +72,13 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     unsigned int curr_lang = 0, i = 0;
     float q;
 
-    /* Empty string, return default language immediately */
-    if (! incoming_header || (0 == strcmp(incoming_header, ""))) {
+    /* Empty or default string, return default language immediately */
+    if (
+        !incoming_header
+        || (0 == strcmp(incoming_header, DEFAULT_LANGUAGE))
+        || (0 == strcmp(incoming_header, ""))
+    )
         RETURN_DEFAULT_LANG;
-    }
 
     /* Tokenize Accept-Language */
     header = (vcl_string *) incoming_header;
