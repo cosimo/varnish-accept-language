@@ -10,9 +10,12 @@ C{
  *
  */
 
+#include <string.h>
+#include <stdlib.h> /* qsort */
+
 
 #define DEFAULT_LANGUAGE "en"
-#define SUPPORTED_LANGUAGES ":en:ja:"
+#define SUPPORTED_LANGUAGES ":en:es:it:ja:ru:zh-cn:"
 
 #define vcl_string char
 #define LANG_LIST_SIZE 10
@@ -112,19 +115,26 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     RETURN_DEFAULT_LANG;
 }
 
+/* Reads req.http.Accept-Language and writes X-Varnish-Accept-Language */
+void vcl_rewrite_accept_language(vcl_string *out_hdr_name) {
 
+    vcl_string *in_hdr;
+    vcl_string lang[LANG_MAXLEN] = "";
+    vcl_string out_hdr_def[28] = "\032X-Varnish-Accept-Language:";
 
-/* Get Accept-Language header from client */
-incoming_header = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
-/* syslog(LOG_INFO, "accept-language.vcl: incoming header \"%s\"", incoming_header); */
+    /* Get Accept-Language header from client */
+    in_hdr = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
 
-/* Normalize and filter out by list of supported languages */
-select_language(incoming_header, lang);
+    /* Normalize and filter out by list of supported languages */
+    select_language(in_hdr, lang);
 
-/* Set another header back, so it can be consumed */
-VRT_SetHdr(sp, HDR_REQ, "\032X-Varnish-Accept-Language:", lang);
-/* syslog(LOG_INFO, "accept-language.vcl: selected lang   \"%s\"", lang); */
+    /* By default, it's a different header name: don't mess with backend logic */
+    if (! out_hdr_name) out_hdr_name = out_hdr_def;
 
+    VRT_SetHdr(sp, HDR_REQ, out_hdr_name, lang);
+
+    return;
+}
 
 /* vim: syn=c ts=4 et sts=4 sw=4 tw=0
 */
