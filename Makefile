@@ -1,8 +1,11 @@
-# Language preferences
+#
+# Set your language preferences here
+#
 DEFAULT_LANGUAGE=en
 SUPPORTED_LANGUAGES=en es it ja ru zh-cn
 
 CC=cc
+CPP=cpp -C -P -E
 DEBUG=
 #DEBUG=-g3
 
@@ -12,7 +15,7 @@ accept-language: accept-language.c
 	$(CC) -Wall -pedantic $(DEBUG) -o accept-language accept-language.c
 
 accept-language.vcl: Makefile accept-language.c gen_vcl.pl
-	./gen_vcl.pl $(DEFAULT_LANGUAGE) $(SUPPORTED_LANGUAGES) > accept-language.vcl
+	./gen_vcl.pl $(DEFAULT_LANGUAGE) $(SUPPORTED_LANGUAGES) < accept-language.c > accept-language.vcl
 
 test:
 	prove -I./t -v ./t

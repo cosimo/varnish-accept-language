@@ -6,8 +6,11 @@
  */
 
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h> /* qsort */
+
+#ifndef __VCL__
+#   include <stdio.h>
+#endif
 
 #define DEFAULT_LANGUAGE "en"
 #define SUPPORTED_LANGUAGES ":bg:cs:da:en:fi:fy:hu:it:ja:no:pl:ru:tr:uk:xx-lol:vn:zh-cn:"
@@ -110,6 +113,28 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     RETURN_DEFAULT_LANG;
 }
 
+#ifdef __VCL__
+/* Reads req.http.Accept-Language and writes X-Varnish-Accept-Language */
+void vcl_rewrite_accept_language(vcl_string *out_hdr_name) {
+
+    vcl_string *in_hdr;
+    vcl_string lang[LANG_MAXLEN] = "";
+    vcl_string out_hdr_def[28] = "\032X-Varnish-Accept-Language:";
+
+    /* Get Accept-Language header from client */
+    in_hdr = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
+
+    /* Normalize and filter out by list of supported languages */
+    select_language(in_hdr, lang);
+
+    /* By default, it's a different header name: don't mess with backend logic */
+    if (! out_hdr_name) out_hdr_name = out_hdr_def;
+
+    VRT_SetHdr(sp, HDR_REQ, out_hdr_name, lang);
+
+    return;
+}
+#else
 int main(int argc, char **argv) {
     vcl_string lang[LANG_MAXLEN] = "";
     if (argc != 2 || ! argv[1]) {
@@ -121,6 +146,7 @@ int main(int argc, char **argv) {
     printf("%s\n", lang);
     return 0;
 }
+#endif /* __VCL__ */
 
 /* vim: syn=c ts=4 et sts=4 sw=4 tw=0
 */

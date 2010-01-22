@@ -6,32 +6,15 @@
 
 use strict;
 use warnings;
-use File::Slurp ();
-
-use constant VCL_EPILOGUE => q{
-
-/* Get Accept-Language header from client */
-incoming_header = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
-/* syslog(LOG_INFO, "accept-language.vcl: incoming header \"%s\"", incoming_header); */
-
-/* Normalize and filter out by list of supported languages */
-select_language(incoming_header, lang);
-
-/* Set another header back, so it can be consumed */
-VRT_SetHdr(sp, HDR_REQ, "\032X-Varnish-Accept-Language:", lang);
-/* syslog(LOG_INFO, "accept-language.vcl: selected lang   \"%s\"", lang); */
-
-};
 
 my @languages = @ARGV;
 
 if (! @languages) {
     die "Usage; $0 <default_language> <list-of-languages>\n" .
-        "example: $0 en bg cs de en fr it ...\n";
+        "example: $0 en de en es fr it no ru zh-cn ...\n";
 }
 
 my $delim = ":";
-
 my $default_lang = shift @languages;
 
 # Add default language to the list if there isn't already
@@ -43,19 +26,31 @@ if (! grep { $_ eq $default_lang } @languages ) {
 my $lang_list = join($delim, @languages);
 $lang_list = ":$lang_list:";
 
-my $c_code = File::Slurp::read_file('accept-language.c');
-my @c_code = split "\n", $c_code;
-my $in_main = 0;
+my @c_code = <STDIN>;
 my @vcl_code;
 
-for my $line (@c_code) {
+READ_C: while (my $line = shift @c_code) {
 
-    # Includes must go in the main vcl file
-    next if $line =~ m{^ \s* \#include}mx;
+    # Parse VCL ifdefs
+    if ($line =~ m{^ \s* \#(ifn?def) \s+ __VCL__}mx) {
+        #warn "\$1 = $1   \$line = $line\n";
+        my $include = $1 eq 'ifdef' ? 1 : 0;
+        IFDEF: while ($line = shift @c_code) {
+            #warn "\tread_line $line\n";
+            if ($line =~ m{^ \s* \#endif}mx) {
+                last IFDEF;
+            }
+            elsif ($line =~ m{^ \s* \#else}mx) { 
+                $include = 1 - $include;
+            }
+            push @vcl_code, $line if $include;
+        }
+        next;
+    }
 
     # Change the supported languages
     if ($line =~ m{^ \s* \#define \s+ SUPPORTED_LANGUAGES}mx) {
-        push @vcl_code, qq(#define SUPPORTED_LANGUAGES "$lang_list"\n);
+        push @vcl_code, qq{#define SUPPORTED_LANGUAGES "$lang_list"\n};
         next;
     }
 
@@ -64,21 +59,7 @@ for my $line (@c_code) {
         next;
     }
 
-    # Install the VCL epilogue. This is the only code that will get executed
-    # that will in turn use the defined functions.
-    if ($in_main) {
-        if ($line =~ m/^ } \s* $/mx) {
-            $in_main = 0;
-            push @vcl_code, VCL_EPILOGUE;
-        }
-        next;
-    }
-    elsif($line =~ m{^ \s* int \s+ main \s* \(}mx) {
-        $in_main = 1;
-        next;
-    }
-
-    push @vcl_code, "$line\n";
+    push @vcl_code, $line;
 }
 
 @vcl_code = (
