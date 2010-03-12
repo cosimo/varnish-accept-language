@@ -9,7 +9,7 @@ require test;
 
 my @langs = qw(bg cs da en fi fy hu it ja no pl ru tr vn);
 
-Test::More::plan(tests => 3 + (@langs * 3));
+Test::More::plan(tests => 5 + (@langs * 3));
 
 test::update_binary();
 test::is_lang('en', 'en');
@@ -22,4 +22,7 @@ for (@langs) {
     test::is_lang("$lang,xy-zx;q=0.01", $_);
     test::is_lang("$lang,en;q=0.99", $_);
 }
+
+test::is_lang('xy', 'en');
+test::is_lang('xy-XX', 'en');
 

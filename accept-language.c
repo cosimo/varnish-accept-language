@@ -10,11 +10,11 @@
 #include <string.h>
 
 #define DEFAULT_LANGUAGE "en"
-#define SUPPORTED_LANGUAGES ":bg:cs:da:en:fi:fy:hu:it:ja:no:pl:ru:tr:uk:xx-lol:vn:zh-cn:"
+#define SUPPORTED_LANGUAGES ":bg:cs:da:de:en:fi:fy:hu:it:ja:no:pl:ru:sq:sk:tr:uk:xx-lol:vn:zh-cn:"
 
 #define vcl_string char
-#define LANG_LIST_SIZE 10
-#define LANG_MAXLEN 10
+#define LANG_LIST_SIZE 16 
+#define LANG_MAXLEN 16
 #define RETURN_LANG(x) { \
     strncpy(lang, x, LANG_MAXLEN); \
     return; \
@@ -66,6 +66,7 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 
     struct lang_list pl[LANG_LIST_SIZE];
     vcl_string *lang_tok = NULL;
+    vcl_string *root_lang = NULL;
     vcl_string *header;
     vcl_string *pos = NULL;
     vcl_string *q_spec = NULL;
@@ -75,6 +76,8 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     /* Empty or default string, return default language immediately */
     if (
         !incoming_header
+        || (0 == strcmp(incoming_header, "en-US"))
+        || (0 == strcmp(incoming_header, "en-GB"))
         || (0 == strcmp(incoming_header, DEFAULT_LANGUAGE))
         || (0 == strcmp(incoming_header, ""))
     )
@@ -84,19 +87,30 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     header = (vcl_string *) incoming_header;
 
     while ((lang_tok = strtok_r(header, " ,", &pos))) {
+
         q = 1.0;
+
         if ((q_spec = strstr(lang_tok, ";q="))) {
             /* Truncate language name before ';' */
             *q_spec = '\0';
             /* Get q value */
             sscanf(q_spec + 3, "%f", &q);
         }
+
         /* Wildcard language '*' should be last in list */
         if ((*lang_tok) == '*') q = 0.0;
+
         /* Push in the prioritized list */
         PUSH_LANG(lang_tok, q);
+
+        /* For cases like 'en-GB', we also want the root language in the final list */
+        if (('-' == lang_tok[2]) && (root_lang = strtok(lang_tok, "-"))) {
+            PUSH_LANG(root_lang, q - 0.001);
+        }
+
         /* For strtok_r() to proceed from where it left off */
         header = NULL;
+
         /* Break out if stored max no. of languages */
         if (curr_lang >= LANG_MAXLEN) break;
     }
@@ -106,7 +120,11 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 
     /* Match with supported languages */
     for (i = 0; i < curr_lang; i++) {
-        if (! is_supported(pl[i].lang)) continue;
+        if (! is_supported(pl[i].lang)) {
+            /*printf("Lang [%s] not supported. Skip.\n", pl[i].lang);*/
+            continue;
+        }
+        /*printf("Found language [%s] that is supported\n", pl[i].lang);*/
         RETURN_LANG(pl[i].lang);
     }
 
@@ -136,7 +154,7 @@ void vcl_rewrite_accept_language(const struct sess *sp) {
 int main(int argc, char **argv) {
     vcl_string lang[LANG_MAXLEN] = "";
     if (argc != 2 || ! argv[1]) {
-        strncpy(lang, "en", 2);
+        strncpy(lang, "??", 2);
     }
     else {
         select_language(argv[1], lang);
