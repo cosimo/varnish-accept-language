@@ -5,6 +5,7 @@
  *
  */
 
+#include <ctype.h>  /* isupper */
 #include <stdio.h>
 #include <stdlib.h> /* qsort */
 #include <string.h>
@@ -21,21 +22,37 @@
 }
 #define RETURN_DEFAULT_LANG RETURN_LANG(DEFAULT_LANGUAGE)
 #define PUSH_LANG(x,y) { \
-    pl[curr_lang].lang = x;    \
+    /* fprintf(stderr, "Pushing lang [%d] %s %.4f\n", curr_lang, x, y); */ \
+    /* We have to copy, otherwise root_lang will be the same every time */ \
+    strncpy(pl[curr_lang].lang, x, LANG_MAXLEN); \
     pl[curr_lang].q = y;       \
     curr_lang++;               \
 }
 
 struct lang_list {
-    vcl_string *lang;
+    vcl_string lang[LANG_MAXLEN];
     float q;
 };
+
+/* In-place lowercase of a string */
+static void strtolower(char *s) {
+    register char *c;
+    for (c=s; *c; c++) {
+        if (isupper(*c)) {
+            *c = tolower(*c);
+        }
+    }
+    return;
+}
 
 /* Checks if a given language is in the static list of the ones we support */
 int is_supported(vcl_string *lang) {
     vcl_string *supported_languages = SUPPORTED_LANGUAGES;
     vcl_string match_str[LANG_MAXLEN + 3] = "";  /* :, :, \0 = 3 */
     int is_supported = 0;
+
+    /* We want to match 'zh-cn' and 'zh-CN' too */
+    strtolower(lang);
 
     /* Search ":<lang>:" in supported languages string */
     strncpy(match_str, ":", 1);
@@ -66,7 +83,7 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 
     struct lang_list pl[LANG_LIST_SIZE];
     vcl_string *lang_tok = NULL;
-    vcl_string *root_lang = NULL;
+    vcl_string root_lang[3];
     vcl_string *header;
     vcl_string *pos = NULL;
     vcl_string *q_spec = NULL;
@@ -104,7 +121,10 @@ void select_language(const vcl_string *incoming_header, char *lang) {
         PUSH_LANG(lang_tok, q);
 
         /* For cases like 'en-GB', we also want the root language in the final list */
-        if (('-' == lang_tok[2]) && (root_lang = strtok(lang_tok, "-"))) {
+        if ('-' == lang_tok[2]) {
+            root_lang[0] = lang_tok[0];
+            root_lang[1] = lang_tok[1];
+            root_lang[2] = '\0';
             PUSH_LANG(root_lang, q - 0.001);
         }
 
@@ -120,12 +140,8 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 
     /* Match with supported languages */
     for (i = 0; i < curr_lang; i++) {
-        if (! is_supported(pl[i].lang)) {
-            /*printf("Lang [%s] not supported. Skip.\n", pl[i].lang);*/
-            continue;
-        }
-        /*printf("Found language [%s] that is supported\n", pl[i].lang);*/
-        RETURN_LANG(pl[i].lang);
+        if (is_supported(pl[i].lang))
+            RETURN_LANG(pl[i].lang);
     }
 
     RETURN_DEFAULT_LANG;
