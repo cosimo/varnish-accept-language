@@ -39,10 +39,12 @@ Requirements
 Instructions
 -------------
 
-1) Configure the list of languages your site supports
-   and the default fallback in the Makefile, *NOT* in the C code.
+1) Run 'make' informing the list of languages your site supports
+   and the default fallback in the command line, e.g.
 
-2) Run 'make && make test'
+   make DEFAULT_LANGUAGE=en SUPPORTED_LANGUAGES="en ja pt pt-br"
+
+2) Run 'make test'
    You should see "All tests successful" at the end of the execution
 
 3) Install the generated accept-language.vcl in /etc/varnish/

@@ -1,8 +1,8 @@
 #
 # Set your language preferences here
 #
-DEFAULT_LANGUAGE=en
-SUPPORTED_LANGUAGES=bg cs da de en es fi fy hu it ja no pl ru sq sk tr uk vn xx-lol zh-cn
+DEFAULT_LANGUAGE ?= en
+SUPPORTED_LANGUAGES ?= bg cs da de en es fi fy hu it ja no pl ru sq sk tr uk vn xx-lol zh-cn
 
 CC=cc
 CPP=cpp -C -P -E
