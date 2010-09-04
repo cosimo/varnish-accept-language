@@ -20,3 +20,5 @@ accept-language.vcl: Makefile accept-language.c gen_vcl.pl
 test:
 	prove -I./t -v ./t
 
+clean:
+	$(RM) $(shell cat .gitignore)
