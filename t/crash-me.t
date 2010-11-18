@@ -18,6 +18,10 @@ my @tests = (
 
     # Malformed string 
     [ 'en-us,en;q=0.5,x-ns1w9Ea$X$dNhK,x-ns2Ef70Nnym7b6' => 'en' ],
+
+    # Strange case of the crashing avatars
+    [ 'en-US,en;q=0.9' => 'en' ],
+
 );
 
 Test::More::plan(tests => @tests + 1);
