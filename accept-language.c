@@ -14,8 +14,9 @@
 #define SUPPORTED_LANGUAGES ":bg:cs:da:de:en:fi:fy:hu:it:ja:no:pl:ru:sq:sk:tr:uk:xx-lol:vn:zh-cn:"
 
 #define vcl_string char
-#define LANG_LIST_SIZE 16 
-#define LANG_MAXLEN 16
+#define LANG_LIST_SIZE 16
+#define HDR_MAXLEN 256
+#define LANG_MAXLEN 8
 #define RETURN_LANG(x) { \
     strncpy(lang, x, LANG_MAXLEN); \
     return; \
@@ -59,9 +60,8 @@ int is_supported(vcl_string *lang) {
     strncat(match_str, lang, LANG_MAXLEN);
     strncat(match_str, ":\0", 2);
 
-    if (strstr(supported_languages, match_str)) {
+    if (strstr(supported_languages, match_str))
         is_supported = 1;
-    }
 
     return is_supported;
 }
@@ -85,6 +85,7 @@ void select_language(const vcl_string *incoming_header, char *lang) {
     vcl_string *lang_tok = NULL;
     vcl_string root_lang[3];
     vcl_string *header;
+    vcl_string header_copy[HDR_MAXLEN];
     vcl_string *pos = NULL;
     vcl_string *q_spec = NULL;
     unsigned int curr_lang = 0, i = 0;
@@ -101,7 +102,7 @@ void select_language(const vcl_string *incoming_header, char *lang) {
         RETURN_DEFAULT_LANG;
 
     /* Tokenize Accept-Language */
-    header = (vcl_string *) incoming_header;
+    header = strncpy(header_copy, incoming_header, sizeof(header_copy));
 
     while ((lang_tok = strtok_r(header, " ,", &pos))) {
 
@@ -132,7 +133,8 @@ void select_language(const vcl_string *incoming_header, char *lang) {
         header = NULL;
 
         /* Break out if stored max no. of languages */
-        if (curr_lang >= LANG_MAXLEN) break;
+        if (curr_lang >= LANG_LIST_SIZE)
+            break;
     }
 
     /* Sort by priority */
@@ -153,12 +155,11 @@ void vcl_rewrite_accept_language(const struct sess *sp) {
     vcl_string *in_hdr;
     vcl_string lang[LANG_MAXLEN];
 
-    memset(lang, 0, LANG_MAXLEN);
-
     /* Get Accept-Language header from client */
     in_hdr = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
 
     /* Normalize and filter out by list of supported languages */
+    memset(lang, 0, sizeof(lang));
     select_language(in_hdr, lang);
 
     /* By default, use a different header name: don't mess with backend logic */
@@ -168,19 +169,25 @@ void vcl_rewrite_accept_language(const struct sess *sp) {
 }
 #else
 int main(int argc, char **argv) {
-    vcl_string lang[LANG_MAXLEN] = "";
+    vcl_string lang[LANG_MAXLEN];
 
     /* We need to check that we don't modify our arguments */
-    vcl_string argv_copy[LANG_MAXLEN] = "";
-    strncpy(argv_copy, argv[1], LANG_MAXLEN);
+    vcl_string argv_copy[HDR_MAXLEN];
+    strncpy(argv_copy, argv[1], sizeof(argv_copy));
 
     if (argc != 2 || ! argv[1])
         strncpy(lang, "??", 2);
     else
         select_language(argv[1], lang);
 
+    /* If original header value is longer than our internal copy buffer,
+       then just output a diagnostic message, don't compare them. See below. */
+    if (strlen(argv[1]) > strlen(argv_copy)) {
+        fprintf(stderr, "# overflowed the max header copy buffer\n");
+    }
+
     /* Detect "corruption" of original arg string */
-    if (strcmp(argv_copy, argv[1])) {
+    else if (strcmp(argv_copy, argv[1])) {
         fprintf(stderr, "# argument '%s' was modified! (now '%s')\n",
             argv_copy, argv[1]
         );
