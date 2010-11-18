@@ -169,13 +169,26 @@ void vcl_rewrite_accept_language(const struct sess *sp) {
 #else
 int main(int argc, char **argv) {
     vcl_string lang[LANG_MAXLEN] = "";
-    if (argc != 2 || ! argv[1]) {
+
+    /* We need to check that we don't modify our arguments */
+    vcl_string argv_copy[LANG_MAXLEN] = "";
+    strncpy(argv_copy, argv[1], LANG_MAXLEN);
+
+    if (argc != 2 || ! argv[1])
         strncpy(lang, "??", 2);
-    }
-    else {
+    else
         select_language(argv[1], lang);
+
+    /* Detect "corruption" of original arg string */
+    if (strcmp(argv_copy, argv[1])) {
+        fprintf(stderr, "# argument '%s' was modified! (now '%s')\n",
+            argv_copy, argv[1]
+        );
+        return 1;
     }
+
     printf("%s\n", lang);
+
     return 0;
 }
 #endif /* __VCL__ */
