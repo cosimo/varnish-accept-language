@@ -1,7 +1,14 @@
 /*
  * Accept-language header normalization
  *
- * Cosimo, 21/01/2010
+ * - Parses client Accept-Language HTTP header
+ * - Tries to find the best match with the supported languages
+ * - Writes the best match as req.http.X-Varnish-Accept-Language
+ *
+ * First version: Cosimo, 21/Jan/2010
+ * Last update:   Cosimo, 18/Nov/2010
+ *
+ * http://github.com/cosimo/varnish-accept-language
  *
  */
 
