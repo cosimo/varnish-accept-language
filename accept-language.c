@@ -6,7 +6,7 @@
  * - Writes the best match as req.http.X-Varnish-Accept-Language
  *
  * First version: Cosimo, 21/Jan/2010
- * Last update:   Cosimo, 18/Nov/2010
+ * Last update:   Cosimo, 03/Nov/2011
  *
  * http://github.com/cosimo/varnish-accept-language
  *
