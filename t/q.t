@@ -16,6 +16,7 @@ my @tests = (
     [ 'en-US,en;q=0.9', 'en' ],
     [ 'ru,en;q=0.9', 'ru' ],
     [ '*,uk;q=0.2,fr;q=0.1', 'uk', 'Wildcard * should be last one' ],
+    [ 'de;q=0.8,pl,fr;q=0.2', 'pl', 'Unspecified q means q=1, regardless of position' ],
 );
 
 Test::More::plan(tests => @tests + 1);
