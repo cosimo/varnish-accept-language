@@ -1,7 +1,7 @@
 Varnish Accept-Language VCL
 ===========================
 
-Last updated: 18/11/2010
+Last updated: 03/11/2011
 	Cosimo Streppone <cosimo@opera.com>
 	Opera Software ASA
 
@@ -14,8 +14,10 @@ This VCL consists of C code. Your Varnish might explode. YMMV.
 Don't use it in production if you don't know what you're doing.
 We are using it in production, but we _don't_ know what we're doing :).
 
+
 Why would you want this?
 ------------------------
+
 Your site supports English and Japanese languages.
 Your client browsers will send every possible Accept-Language header on Earth.
 If you enable "Vary: Accept-Language" on Varnish or on your backends,
@@ -30,11 +32,13 @@ The rewritten header is "X-Varnish-Accept-Language".
 You can choose to put this header back in "Accept-Language" if you wish.
 In this way, the normalization will be completely transparent.
 
+
 Requirements
 ------------
 
 - gcc, make
 - a recent perl, with `prove'
+
 
 Instructions
 -------------
