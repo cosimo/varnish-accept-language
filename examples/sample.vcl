@@ -12,9 +12,9 @@ C{
 }C
 
 	# ...
-	# lookup;
+	# return(lookup);
 
-    pass;
+    return(pass);
 }
 
 sub vcl_fetch {
@@ -23,11 +23,11 @@ sub vcl_fetch {
 
 	# Store different versions of the resource by the
 	# content of the new X-Varnish-Accept-Language header
-	set obj.http.Vary = "X-Varnish-Accept-Language";
+	set beresp.http.Vary = "X-Varnish-Accept-Language";
 
 	# ...
-	# deliver;
+	# return(deliver);
 
-    pass;
+    return(pass);
 }
 
