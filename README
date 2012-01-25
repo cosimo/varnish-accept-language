@@ -55,7 +55,7 @@ Instructions
 
 4) At the top of your main VCL file, add the following line:
 
-     include "/etc/varnish/accept-language.vcl"
+     include "/etc/varnish/accept-language.vcl";
 
    and then in your vcl_recv() add:
 
