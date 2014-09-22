@@ -60,7 +60,7 @@ Instructions
    and then in your vcl_recv() add:
 
      C{
-     vcl_rewrite_accept_language(sp);
+     vcl_rewrite_accept_language(ctx);
      }C
 
    This will parse Accept-Language and insert the final language into the
