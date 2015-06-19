@@ -158,20 +158,21 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 
 #ifdef __VCL__
 /* Reads req.http.Accept-Language and writes X-Varnish-Accept-Language */
-void vcl_rewrite_accept_language(const struct sess *sp) {
+void vcl_rewrite_accept_language(const struct vrt_ctx *ctx) {
     vcl_string *in_hdr;
     vcl_string lang[LANG_MAXLEN];
+    const struct gethdr_s hdr = { HDR_REQ, "\020Accept-Language:" };
+    const struct gethdr_s hdrUpd = { HDR_REQ, "\032X-Varnish-Accept-Language:"};
 
     /* Get Accept-Language header from client */
-    in_hdr = VRT_GetHdr(sp, HDR_REQ, "\020Accept-Language:");
+    in_hdr = VRT_GetHdr(ctx, &hdr);
 
     /* Normalize and filter out by list of supported languages */
     memset(lang, 0, sizeof(lang));
     select_language(in_hdr, lang);
 
     /* By default, use a different header name: don't mess with backend logic */
-    VRT_SetHdr(sp, HDR_REQ, "\032X-Varnish-Accept-Language:", lang, vrt_magic_string_end);
-
+    VRT_SetHdr(ctx, &hdrUpd, lang, vrt_magic_string_end);
     return;
 }
 #else
