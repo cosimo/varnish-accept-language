@@ -159,7 +159,7 @@ void select_language(const vcl_string *incoming_header, char *lang) {
 #ifdef __VCL__
 /* Reads req.http.Accept-Language and writes X-Varnish-Accept-Language */
 void vcl_rewrite_accept_language(const struct vrt_ctx *ctx) {
-    vcl_string *in_hdr;
+    const vcl_string *in_hdr;
     vcl_string lang[LANG_MAXLEN];
     const struct gethdr_s hdr = { HDR_REQ, "\020Accept-Language:" };
     const struct gethdr_s hdrUpd = { HDR_REQ, "\032X-Varnish-Accept-Language:"};
